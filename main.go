@@ -38,10 +38,31 @@ func main() {
 func sPrint(objType string, content []byte) string {
 	switch objType {
 	case "blob":
-		return string(content)
+		if len(content) > 10 {
+			return string(content)[:10] + "..."
+		} else {
+			return string(content)
+		}
 	case "tree":
-		index := bytes.Index(content, []byte("\000"))
-		return string(content[:index]) + " " + fmt.Sprintf("%x", content[index+1:])
+		s := ""
+		index := 0
+		for {
+			index = bytes.Index(content, []byte("\000"))
+			if index == -1 {
+				s = string(content)
+				break
+			}
+			nextIndex := bytes.Index(content[index+1:], []byte("\000")) + index
+			if nextIndex != -1 {
+				s += string(content[:index]) + " " + fmt.Sprintf("%x", content[index+1:nextIndex])
+			} else {
+				s += string(content[:index]) + " " + fmt.Sprintf("%x", content[index+1:])
+				break
+			}
+			index = nextIndex
+			log.Printf("index", index)
+		}
+		return s
 	case "commit":
 		return string(content)
 	default:
